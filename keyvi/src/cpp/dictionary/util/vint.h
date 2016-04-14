@@ -220,7 +220,7 @@ inline std::string decodeVarintString(int file, uint64_t offset){
   for (;; i++) {
     unsigned char ch = 0;
     read(file, (char*)&ch, sizeof(ch));
-    length |= (ch & 127) << (7 * i);
+    length |= ((uint64_t)ch & 127) << (7 * i);
 
     //If the next-byte flag is set
     if (!(ch & 128)) {
