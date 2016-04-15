@@ -51,7 +51,8 @@ linklibraries =  [ "tpie",
    "boost_regex",
    "boost_thread",
    "z",
-   "snappy"
+   "snappy",
+   "pthread"
    ]
 
 if buildmode == 'coverage':
@@ -65,7 +66,7 @@ install_prefix = GetOption('prefix')
 custom_boost = GetOption('boost_dir')
 
 launch_dir = env.GetLaunchDir()
-env.Append(CPPFLAGS = ['-std=c++11', '-msse4.2'])
+env.Append(CPPFLAGS = ['-std=c++11', '-msse4.2', '-w'])
 env.Append(CPPPATH=[launch_dir + '/3rdparty/rapidjson/include',
                     launch_dir + '/3rdparty/msgpack-c/include',
                     launch_dir + '/3rdparty/utf8',
