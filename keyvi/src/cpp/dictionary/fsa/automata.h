@@ -98,10 +98,6 @@ final {
       TRACE("transitions start offset: %d", offset + array_size);
       transitions_start_offset_ = offset + array_size;
 
-      // prevent pre-fetching pages by the OS which does not make sense for the FST structure
-      labels_region_->advise(boost::interprocess::mapped_region::advice_types::advice_random);
-      transitions_region_->advise(boost::interprocess::mapped_region::advice_types::advice_random);
-
       TRACE("full file size %zu", offset + array_size + bucket_size * array_size);
 
       TRACE("value store position %zu", lseek(file, 0, SEEK_CUR));
