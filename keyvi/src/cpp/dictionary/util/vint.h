@@ -43,8 +43,8 @@ namespace util {
  * @parma outputSizePtr A pointer to a single integer that is set to the number of bytes used in the output memory.
  */
 template<typename int_t = uint64_t>
-void encodeVarint(int_t value, uint8_t* output, uint8_t* outputSizePtr) {
-  uint8_t outputSize = 0;
+void encodeVarint(int_t value, uint8_t* output, size_t* outputSizePtr) {
+  size_t outputSize = 0;
   //While more than 7 bits of data are left, occupy the last output byte
   // and set the next byte flag
   while (value > 127) {
@@ -66,8 +66,8 @@ void encodeVarint(int_t value, uint8_t* output, uint8_t* outputSizePtr) {
  * @parma outputSizePtr A pointer to a single integer that is set to the number of bytes used in the output memory.
  */
 template<typename int_t = uint64_t>
-void encodeVarshort(int_t value, uint16_t* output, uint8_t* outputSizePtr) {
-  uint8_t outputSize = 0;
+void encodeVarshort(int_t value, uint16_t* output, size_t* outputSizePtr) {
+  size_t outputSize = 0;
   //While more than 15 bits of data are left, occupy the last output byte
   // and set the next byte flag
   while (value > 32767) {
@@ -118,16 +118,19 @@ size_t getVarshortLength(int_t value){
  * @param output the buffer to write to
  */
 template<typename int_t = uint64_t, typename buffer_t>
-void encodeVarint(int_t value, buffer_t& output) {
+void encodeVarint(int_t value, buffer_t& output, size_t* written_bytes) {
   //While more than 7 bits of data are left, occupy the last output byte
   // and set the next byte flag
+  size_t length = 0;
   while (value > 127) {
     //|128: Set the next byte flag
     output.push_back(((uint8_t) (value & 127)) | 128);
     //Remove the seven bits we just wrote
     value >>= 7;
+    ++length;
   }
   output.push_back(((uint8_t) value) & 127);
+  *written_bytes = ++length;
 }
 
 /**
@@ -197,7 +200,7 @@ inline size_t skipVarint(const char* input) {
 
 inline std::string decodeVarintString(const char* input){
   uint64_t length = 0;
-  uint8_t i = 0;
+  size_t i = 0;
 
   for (;; i++) {
     length |= (input[i] & 127) << (7 * i);
@@ -231,6 +234,24 @@ inline std::string decodeVarintString(int file, uint64_t offset){
   std::string res(length, 0);
   read(file, &res[0], length);
   return res;
+}
+
+inline const char* decodeVarintString(const char* input, size_t* length_ptr) {
+  size_t length = 0;
+  size_t i = 0;
+
+    for (;; i++) {
+      length |= (input[i] & 127) << (7 * i);
+
+      //If the next-byte flag is set
+      if (!(input[i] & 128)) {
+        break;
+      }
+    }
+
+    *length_ptr = length;
+    return input + i + 1;
+
 }
 
 } /* namespace util */

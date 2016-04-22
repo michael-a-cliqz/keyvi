@@ -148,9 +148,14 @@ ext_modules = [Extension('pykeyvi',
 
 PACKAGE_NAME = 'python-keyvi'
 
+install_requires = [
+    'msgpack-python',
+    'python-snappy',
+    ]
+
 setup(
     name = PACKAGE_NAME,
-    version = '0.1.14',
+    version = '0.1.19',
     description = 'Python bindings for keyvi',
     author = 'Hendrik Muhs',
     author_email = 'hendrik.muhs@gmail.com',
@@ -159,7 +164,8 @@ setup(
     ext_modules = ext_modules,
     zip_safe = False,
     url = 'https://github.com/cliqz/keyvi',
-    download_url = 'https://github.com/cliqz/keyvi/tarball/v0.1.14',
+    download_url = 'https://github.com/cliqz/keyvi/tarball/v0.1.19',
     keywords = ['FST'],
     classifiers = [],
+    install_requires=install_requires,
 )

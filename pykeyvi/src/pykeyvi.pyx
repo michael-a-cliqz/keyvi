@@ -9,7 +9,6 @@ from  AutowrapRefHolder cimport AutowrapRefHolder
 from  libcpp cimport bool
 from  libc.string cimport const_char
 from cython.operator cimport dereference as deref, preincrement as inc, address as address
-import msgpack
 from cython.operator cimport dereference, preincrement
 cimport cython.operator as co
 from cluster cimport JumpConsistentHashString as _JumpConsistentHashString_cluster
@@ -18,6 +17,7 @@ from dictionary cimport Dictionary as _Dictionary
 from forward_backward_completion cimport ForwardBackwardCompletion as _ForwardBackwardCompletion
 from normalization cimport FsaTransform as _FsaTransform
 from dictionary_compiler cimport JsonDictionaryCompiler as _JsonDictionaryCompiler
+from dictionary_merger cimport JsonDictionaryMerger as _JsonDictionaryMerger
 from dictionary_compiler cimport KeyOnlyDictionaryCompiler as _KeyOnlyDictionaryCompiler
 from generator cimport KeyOnlyDictionaryGenerator as _KeyOnlyDictionaryGenerator
 from match cimport Match as _Match
@@ -38,6 +38,27 @@ def JumpConsistentHashString(bytes in_0 ,  in_1 ):
     cdef uint32_t _r = _JumpConsistentHashString_cluster(input_in_0, (<uint32_t>in_1))
     py_result = <uint32_t>_r
     return py_result 
+
+cdef class JsonDictionaryMerger:
+
+    cdef shared_ptr[_JsonDictionaryMerger] inst
+
+    def __dealloc__(self):
+         self.inst.reset()
+
+    
+    def __init__(self):
+        self.inst = shared_ptr[_JsonDictionaryMerger](new _JsonDictionaryMerger())
+    
+    def Merge(self, bytes in_0 ):
+        assert isinstance(in_0, bytes), 'arg in_0 wrong type'
+    
+        self.inst.get().Merge((<libcpp_string>in_0))
+    
+    def Add(self, bytes in_0 ):
+        assert isinstance(in_0, bytes), 'arg in_0 wrong type'
+    
+        self.inst.get().Add((<libcpp_string>in_0)) 
 
 cdef class StringDictionaryCompiler:
 
@@ -114,8 +135,8 @@ cdef class StringDictionaryCompiler:
 
 
     def SetManifest(self, manifest):
-        import json
-        self.inst.get().SetManifestFromString(json.dumps(manifest)) 
+        m = json.dumps(manifest)
+        self.inst.get().SetManifestFromString(m) 
 
 cdef class JsonDictionaryCompiler:
 
@@ -192,8 +213,8 @@ cdef class JsonDictionaryCompiler:
 
 
     def SetManifest(self, manifest):
-        import json
-        self.inst.get().SetManifestFromString(json.dumps(manifest)) 
+        m = json.dumps(manifest)
+        self.inst.get().SetManifestFromString(m) 
 
 cdef class Dictionary:
 
@@ -221,7 +242,7 @@ cdef class Dictionary:
         py_result.end = _r.end()
         return py_result
     
-    def GetNear(self, bytes in_0 ,  minimum_prefix_length ):
+    def _GetNear_0(self, bytes in_0 ,  minimum_prefix_length ):
         assert isinstance(in_0, bytes), 'arg in_0 wrong type'
         assert isinstance(minimum_prefix_length, (int, long)), 'arg minimum_prefix_length wrong type'
     
@@ -231,6 +252,27 @@ cdef class Dictionary:
         py_result.it = _r.begin()
         py_result.end = _r.end()
         return py_result
+    
+    def _GetNear_1(self, bytes in_0 ,  minimum_prefix_length ,  greedy ):
+        assert isinstance(in_0, bytes), 'arg in_0 wrong type'
+        assert isinstance(minimum_prefix_length, (int, long)), 'arg minimum_prefix_length wrong type'
+        assert isinstance(greedy, (int, long)), 'arg greedy wrong type'
+    
+    
+    
+        cdef _MatchIteratorPair _r = self.inst.get().GetNear((<libcpp_string>in_0), (<size_t>minimum_prefix_length), (<bool>greedy))
+        cdef MatchIterator py_result = MatchIterator.__new__(MatchIterator)
+        py_result.it = _r.begin()
+        py_result.end = _r.end()
+        return py_result
+    
+    def GetNear(self, *args):
+        if (len(args)==2) and (isinstance(args[0], bytes)) and (isinstance(args[1], (int, long))):
+            return self._GetNear_0(*args)
+        elif (len(args)==3) and (isinstance(args[0], bytes)) and (isinstance(args[1], (int, long))) and (isinstance(args[2], (int, long))):
+            return self._GetNear_1(*args)
+        else:
+               raise Exception('can not handle type of %s' % (args,))
     
     def _init_0(self, bytes filename ):
         assert isinstance(filename, bytes), 'arg filename wrong type'
@@ -264,12 +306,12 @@ cdef class Dictionary:
     def get (self, key, default = None):
         assert isinstance(key, bytes), 'arg in_0 wrong type'
     
-        cdef _Match * _r = new _Match(deref(self.inst.get())[(<const_char *>key)])
+        cdef shared_ptr[_Match] _r = shared_ptr[_Match](new _Match(deref(self.inst.get())[(<const_char *>key)]))
 
-        if _r.IsEmpty():
+        if _r.get().IsEmpty():
             return default
         cdef Match py_result = Match.__new__(Match)
-        py_result.inst = shared_ptr[_Match](_r)
+        py_result.inst = _r
         return py_result
 
     def __contains__(self, key):
@@ -283,12 +325,12 @@ cdef class Dictionary:
     def __getitem__ (self, key):
         assert isinstance(key, bytes), 'arg in_0 wrong type'
     
-        cdef _Match * _r = new _Match(deref(self.inst.get())[(<const_char *>key)])
+        cdef shared_ptr[_Match] _r = shared_ptr[_Match](new _Match(deref(self.inst.get())[(<const_char *>key)]))
 
-        if _r.IsEmpty():
+        if _r.get().IsEmpty():
             raise KeyError(key)
         cdef Match py_result = Match.__new__(Match)
-        py_result.inst = shared_ptr[_Match](_r)
+        py_result.inst = _r
         return py_result
 
     def _key_iterator_wrapper(self, iterator):
@@ -510,8 +552,8 @@ cdef class CompletionDictionaryCompiler:
 
 
     def SetManifest(self, manifest):
-        import json
-        self.inst.get().SetManifestFromString(json.dumps(manifest))
+        m = json.dumps(manifest)
+        self.inst.get().SetManifestFromString(m)
 
 
 # definition for all compilers
@@ -676,8 +718,8 @@ cdef class KeyOnlyDictionaryCompiler:
 
 
     def SetManifest(self, manifest):
-        import json
-        self.inst.get().SetManifestFromString(json.dumps(manifest)) 
+        m = json.dumps(manifest)
+        self.inst.get().SetManifestFromString(m) 
 
 cdef class Match:
 
@@ -796,6 +838,25 @@ cdef class Match:
         else:
             raise Exception("Unsupported Value Type")
 
+
+    def GetValue(self):
+        """Decodes a keyvi value and returns it."""
+        value = self.inst.get().GetRawValueAsString()
+        if value is None or len(value) == 0:
+            return None
+
+        elif value[0] == '\x00':
+            return msgpack.loads(value[1:])
+
+        elif value[0] == '\x01':
+            value = zlib.decompress(value[1:])
+
+        elif value[0] == '\x02':
+            value = snappy.decompress(value[1:])
+
+        return msgpack.loads(value)
+
+
     def dumps(self):
         m=[]
         do_pack_rest = False
@@ -845,7 +906,12 @@ cdef class Match:
  
  
 # import uint32_t type
-from libc.stdint cimport uint32_t 
+from libc.stdint cimport uint32_t
+
+import json
+import msgpack
+import zlib
+import snappy 
  
 # same import style as autowrap
 from match cimport Match as _Match
